@@ -1,11 +1,13 @@
-var parser = require('./parser')
 var net = require('net')
+var parser = require('./parser')
+var Room = require('./Room')
 
 var server = net.Server()
 
 server.listen(1337)
 
 var sockets = []
+var rooms = []
 
 server.on('connection', function(socket) {
   socket.room = "home"
@@ -23,12 +25,22 @@ function sendGreeting(socket) {
 }
 
 function askName(socket) {
-  socket.write("What would you like your username to be??\n")
+  socket.write("What would you like your username to be?? (2-15 characters)\n")
 }
 
-function nameTaken(socket) {
-  socket.write("Sorry, but that name is taken. Please try again.\n")
+function isAvailableUsername(userInput) {
+  return sockets.filter(function(socket) {
+    return socket.username === userInput
+  }).length < 1
+}
+
+function nameInvalid(socket) {
+  socket.write("Sorry, please try again.\nThe name you have provided is either taken or has failed validation.\n")
   askName(socket)
+}
+
+function assignUsernameToSocket(userInput ) {
+  this.username = userInput
 }
 
 function welcomeUser(socket) {
@@ -40,26 +52,16 @@ function determineAction(data) {
   var userInput = data.toString().trim()
   if (currentSocket.username) {
     var verdict = parser.analyzeInput(userInput)
-    if (verdict["command"]) { executeCommand(verdict["command"]) }
+    if (verdict["command"]) { executeCommand(verdict["command"], currentSocket) }
     if (verdict["userInput"]) { broadcastToRoom(currentSocket, "home", userInput) }
   } else {
-    if (isAvailableUsername(userInput)) {
+    if (isAvailableUsername(userInput) && userInput.length >= 2 && userInput.length <= 15) {
       assignUsernameToSocket.call(currentSocket, userInput)
       welcomeUser(currentSocket)
     } else {
-      nameTaken(currentSocket)
+      nameInvalid(currentSocket)
     }
   }
-}
-
-function assignUsernameToSocket(userInput ) {
-  this.username = userInput
-}
-
-function isAvailableUsername(userInput) {
-  return sockets.filter(function(socket) {
-    return socket.username === userInput
-  }).length < 1
 }
 
 function broadcastToRoom(currentSocket, room, userInput) {
@@ -75,6 +77,23 @@ function removeSocket() {
   sockets.splice(i, 1)
 }
 
-function executeCommand(command) {
+function executeCommand(command, currentSocket) {
+  switch (command) {
+    case '/rooms':
+    displayRooms(rooms, currentSocket)
+    case '/create':
+    rooms.push(new Room("DANCEPARTYROOM"))
+  }
 
+}
+
+function displayRooms(rooms, currentSocket) {
+  if (rooms.length) { currentSocket.write("Now Displaying Rooms:\n") }
+  rooms.forEach(function(room) {
+    currentSocket.write(room.name + " contains [" + getRoomCount(room.name) + "]\n")
+  })
+}
+
+function getRoomCount(roomName) {
+  return sockets.filter(function(socket) { return socket.room === roomName }).length
 }
