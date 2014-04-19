@@ -8,13 +8,13 @@ server.listen(1337)
 var sockets = []
 
 server.on('connection', function(socket) {
+  socket.room = "home"
   sockets.push(socket)
 
   sendGreeting(socket)
   askName(socket)
 
   socket.on('data', determineAction)
-
   socket.on('end', removeSocket)
 })
 
@@ -40,8 +40,8 @@ function determineAction(data) {
   var userInput = data.toString().trim()
   if (currentSocket.username) {
     var verdict = parser.analyzeInput(userInput)
-    if (verdict['command']) { executeCommand(verdict['command']) }
-    if (verdict['userInput']) { broadcast(currentSocket, userInput) }
+    if (verdict["command"]) { executeCommand(verdict["command"]) }
+    if (verdict["userInput"]) { broadcastToRoom(currentSocket, "home", userInput) }
   } else {
     if (isAvailableUsername(userInput)) {
       assignUsernameToSocket.call(currentSocket, userInput)
@@ -62,9 +62,11 @@ function isAvailableUsername(userInput) {
   }).length < 1
 }
 
-function broadcast(currentSocket, userInput) {
+function broadcastToRoom(currentSocket, room, userInput) {
   for (var i = 0; i < sockets.length; i++) {
-    if (sockets[i] !== this) { sockets[i].write(userInput + '\n') }
+    if (sockets[i].room === room && sockets[i] !== currentSocket) {
+      sockets[i].write(currentSocket.username + ': ' + userInput + '\n')
+    }
   }
 }
 
