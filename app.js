@@ -4,6 +4,7 @@ var Writer = require('./Writer')
 var Broadcaster = require('./Broadcaster')
 var Room = require('./Room')
 var SocketUsername = require('./SocketUsername')
+var Command = require('./Command')
 var RoomHelper = require('./RoomHelper')
 
 var server = net.Server()
@@ -14,7 +15,6 @@ var sockets = []
 var rooms = []
 
 var DEFAULTROOM = "home"
-var VALIDCOMMANDS = ["/create", "/rooms", "/join", "/users", "/help"]
 
 rooms.push(new Room(DEFAULTROOM))
 
@@ -39,8 +39,12 @@ function respondToUserInput(data) {
   var userInput = data.toString().trim()
   if (currentSocket.username) {
     var parsedInput = parser.analyzeInput(userInput)
-    if (parsedInput["userInput"]["command"]) { executeCommand(parsedInput["userInput"], currentSocket) }
-    if (parsedInput["userInput"]["dialog"]) { Broadcaster.postDialog(currentSocket, userInput, sockets) }
+    if (Command.isValid(parsedInput["command"])) {
+      Command.execute(parsedInput, currentSocket, rooms, sockets)
+    }
+    if (parsedInput["dialog"]) {
+      Broadcaster.postDialog(currentSocket, userInput, sockets)
+    }
   } else {
     if (SocketUsername.isAvailable(userInput, sockets) && SocketUsername.isValid(userInput)) {
       SocketUsername.assign.call(currentSocket, userInput)
@@ -49,22 +53,5 @@ function respondToUserInput(data) {
     } else {
       Writer.notifyNameInvalid(currentSocket)
     }
-  }
-}
-
-function executeCommand(parsedInput, currentSocket) {
-  switch (parsedInput["command"]) {
-  case '/rooms':
-    RoomHelper.displayRooms(rooms, currentSocket, sockets)
-    break
-  case '/create':
-    var proposedRoomName = parsedInput["specification"]
-    if (RoomHelper.isAvailableName(rooms, proposedRoomName)) {
-      rooms.push(new Room(proposedRoomName))
-      Writer.notifyRoomCreated(currentSocket, rooms[rooms.length-1].name)
-    } else {
-      Writer.notifyFailedRoomCreation(currentSocket, proposedRoomName)
-    }
-    break
   }
 }
