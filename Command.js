@@ -22,6 +22,13 @@ function execute(parsedInput, currentSocket, rooms, sockets) {
       Writer.notifyFailedRoomCreation(currentSocket, proposedRoomName)
     }
     break
+  case '/join':
+    var specifiedRoom = parsedInput["specification"]
+    rooms.forEach(function(room) {
+      if (room.name === specifiedRoom) {
+        currentSocket.room = specifiedRoom
+      }
+    })
   }
 }
 
