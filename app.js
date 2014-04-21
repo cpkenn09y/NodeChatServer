@@ -1,6 +1,7 @@
 var net = require('net')
 var parser = require('./parser')
 var Room = require('./Room')
+var Writer = require('./Writer')
 
 var server = net.Server()
 
@@ -8,6 +9,7 @@ server.listen(1337)
 
 var sockets = []
 var rooms = []
+rooms.push(new Room("home"))
 
 server.on('connection', function(socket) {
   socket.room = "home"
@@ -21,11 +23,11 @@ server.on('connection', function(socket) {
 })
 
 function sendGreeting(socket) {
-  socket.write("Hello and welcome to PandaChat!\n")
+  Writer.greet(socket)
 }
 
 function askName(socket) {
-  socket.write("What would you like your username to be?? (2-15 characters)\n")
+  Writer.askName(socket)
 }
 
 function isAvailableUsername(userInput) {
@@ -35,8 +37,8 @@ function isAvailableUsername(userInput) {
 }
 
 function nameInvalid(socket) {
-  socket.write("Sorry, please try again.\nThe name you have provided is either taken or has failed validation.\n")
-  askName(socket)
+  Writer.notifyNameInvalid(socket)
+  Writer.askName(socket)
 }
 
 function assignUsernameToSocket(userInput ) {
@@ -44,8 +46,7 @@ function assignUsernameToSocket(userInput ) {
 }
 
 function welcomeUser(socket) {
-  socket.write("Welcome " + socket.username + "! You are among friends.\n")
-  socket.write("Start talking to the community! For a list of commands write /help\n")
+  Writer.welcomeUser(socket, socket.username)
 }
 
 function determineAction(data) {
@@ -54,7 +55,7 @@ function determineAction(data) {
   if (currentSocket.username) {
     var parsedInput = parser.analyzeInput(userInput)
     if (parsedInput["userInput"]["command"]) { executeCommand(parsedInput["userInput"], currentSocket) }
-    if (parsedInput["userInput"]) { broadcastToRoom(currentSocket, "home", userInput) }
+    if (parsedInput["userInput"]["dialog"]) { broadcastToRoom(currentSocket, "home", userInput) }
   } else {
     if (isAvailableUsername(userInput) && userInput.length >= 2 && userInput.length <= 15) {
       assignUsernameToSocket.call(currentSocket, userInput)
@@ -68,7 +69,7 @@ function determineAction(data) {
 }
 
 function getEnteredNotification(username) {
-  return username + "has entered the room.\n"
+  return "* " + username + " has entered the room.\n"
 }
 
 function broadcastToRoom(currentSocket, room, userInput) {
@@ -101,9 +102,9 @@ function executeCommand(parsedInput, currentSocket) {
     var proposedRoomName = parsedInput["specification"]
     if (isAvailableRoomName(proposedRoomName)) {
       rooms.push(new Room(proposedRoomName))
-      currentSocket.write("ROOM CREATION SUCCESSFUL YOU CAN JOIN THE ROOM BY ENTERING: /join " + rooms[rooms.length-1].name + "\n")
+      Writer.notifyRoomCreated(currentSocket, rooms[rooms.length-1].name)
     } else {
-      currentSocket.write("THERE IS ALREADY A ROOM WITH THE NAME: " + proposedRoomName + "\n")
+      Writer.notifyFailedRoomCreation(currentSocket, proposedRoomName)
     }
     break
   }
@@ -116,12 +117,13 @@ function isAvailableRoomName(proposedRoomName) {
 }
 
 function displayRooms(rooms, currentSocket) {
-  if (rooms.length) { currentSocket.write("Now Displaying Rooms:\n")
+  if (rooms.length) {
+    Writer.notifyDisplayingRooms(currentSocket)
     rooms.forEach(function(room) {
-      currentSocket.write(room.name + " contains [" + getRoomCount(room.name) + "]\n")
+      Writer.notifyRoomDetails(currentSocket, room.name, getRoomCount(room.name))
     })
   } else {
-    currentSocket.write("There are currently no rooms made.\nTo create a room, use the command /create followed by the room name\nex: /create myRoom\n")
+    Writer.notifyNoRooms(currentSocket)
   }
 }
 
