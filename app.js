@@ -2,6 +2,7 @@ var net = require('net')
 var parser = require('./parser')
 var Room = require('./Room')
 var Writer = require('./Writer')
+var Broadcaster = require('./Broadcaster')
 
 var server = net.Server()
 
@@ -9,10 +10,11 @@ server.listen(1337)
 
 var sockets = []
 var rooms = []
-rooms.push(new Room("home"))
+var DEFAULTROOM = "home"
+rooms.push(new Room(DEFAULTROOM))
 
 server.on('connection', function(socket) {
-  socket.room = "home"
+  socket.room = DEFAULTROOM
   sockets.push(socket)
 
   sendGreeting(socket)
@@ -55,35 +57,14 @@ function determineAction(data) {
   if (currentSocket.username) {
     var parsedInput = parser.analyzeInput(userInput)
     if (parsedInput["userInput"]["command"]) { executeCommand(parsedInput["userInput"], currentSocket) }
-    if (parsedInput["userInput"]["dialog"]) { broadcastToRoom(currentSocket, "home", userInput) }
+    if (parsedInput["userInput"]["dialog"]) { Broadcaster.postDialog(currentSocket, userInput, sockets) }
   } else {
     if (isAvailableUsername(userInput) && userInput.length >= 2 && userInput.length <= 15) {
       assignUsernameToSocket.call(currentSocket, userInput)
       welcomeUser(currentSocket)
-      var enteredAnnouncement = getEnteredNotification(currentSocket.username)
-      serverBroadcastToRoom(currentSocket, currentSocket.room, enteredAnnouncement)
+      Broadcaster.announceEnteredRoom(currentSocket, sockets)
     } else {
       nameInvalid(currentSocket)
-    }
-  }
-}
-
-function getEnteredNotification(username) {
-  return "* " + username + " has entered the room.\n"
-}
-
-function broadcastToRoom(currentSocket, room, userInput) {
-  for (var i = 0; i < sockets.length; i++) {
-    if (sockets[i].room === room && sockets[i] !== currentSocket) {
-      sockets[i].write(currentSocket.username + ': ' + userInput + '\n')
-    }
-  }
-}
-
-function serverBroadcastToRoom(currentSocket, room, announcement) {
-  for (var i = 0; i < sockets.length; i++) {
-    if (sockets[i].room === room && sockets[i] !== currentSocket) {
-      sockets[i].write(announcement)
     }
   }
 }
