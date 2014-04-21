@@ -59,16 +59,30 @@ function determineAction(data) {
     if (isAvailableUsername(userInput) && userInput.length >= 2 && userInput.length <= 15) {
       assignUsernameToSocket.call(currentSocket, userInput)
       welcomeUser(currentSocket)
+      var enteredAnnouncement = getEnteredNotification(currentSocket.username)
+      serverBroadcastToRoom(currentSocket, currentSocket.room, enteredAnnouncement)
     } else {
       nameInvalid(currentSocket)
     }
   }
 }
 
+function getEnteredNotification(username) {
+  return username + "has entered the room.\n"
+}
+
 function broadcastToRoom(currentSocket, room, userInput) {
   for (var i = 0; i < sockets.length; i++) {
     if (sockets[i].room === room && sockets[i] !== currentSocket) {
       sockets[i].write(currentSocket.username + ': ' + userInput + '\n')
+    }
+  }
+}
+
+function serverBroadcastToRoom(currentSocket, room, announcement) {
+  for (var i = 0; i < sockets.length; i++) {
+    if (sockets[i].room === room && sockets[i] !== currentSocket) {
+      sockets[i].write(announcement)
     }
   }
 }
