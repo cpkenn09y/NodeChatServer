@@ -1,8 +1,11 @@
 function analyzeInput(userInput) {
   if (userInput[0] === '/') {
-    return { command : userInput }
+    var specification
+    var splitInput = userInput.split(' ')
+    if (splitInput[1]) { var specification = splitInput[1].trim()}
+    return {userInput : {command : splitInput[0].trim(), specification : specification }}
   } else {
-    return { userInput : userInput}
+    return {userInput : userInput}
   }
 }
 

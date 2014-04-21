@@ -45,15 +45,16 @@ function assignUsernameToSocket(userInput ) {
 
 function welcomeUser(socket) {
   socket.write("Welcome " + socket.username + "! You are among friends.\n")
+  socket.write("Start talking to the community! For a list of commands write /help\n")
 }
 
 function determineAction(data) {
   var currentSocket = this
   var userInput = data.toString().trim()
   if (currentSocket.username) {
-    var verdict = parser.analyzeInput(userInput)
-    if (verdict["command"]) { executeCommand(verdict["command"], currentSocket) }
-    if (verdict["userInput"]) { broadcastToRoom(currentSocket, "home", userInput) }
+    var parsedInput = parser.analyzeInput(userInput)
+    if (parsedInput["userInput"]["command"]) { executeCommand(parsedInput["userInput"], currentSocket) }
+    if (parsedInput["userInput"]) { broadcastToRoom(currentSocket, "home", userInput) }
   } else {
     if (isAvailableUsername(userInput) && userInput.length >= 2 && userInput.length <= 15) {
       assignUsernameToSocket.call(currentSocket, userInput)
@@ -77,21 +78,37 @@ function removeSocket() {
   sockets.splice(i, 1)
 }
 
-function executeCommand(command, currentSocket) {
-  switch (command) {
-    case '/rooms':
+function executeCommand(parsedInput, currentSocket) {
+  switch (parsedInput["command"]) {
+  case '/rooms':
     displayRooms(rooms, currentSocket)
-    case '/create':
-    rooms.push(new Room("DANCEPARTYROOM"))
+    break
+  case '/create':
+    var proposedRoomName = parsedInput["specification"]
+    if (isAvailableRoomName(proposedRoomName)) {
+      rooms.push(new Room(proposedRoomName))
+      currentSocket.write("ROOM CREATION SUCCESSFUL YOU CAN JOIN THE ROOM BY ENTERING: /join " + rooms[rooms.length-1].name + "\n")
+    } else {
+      currentSocket.write("THERE IS ALREADY A ROOM WITH THE NAME: " + proposedRoomName + "\n")
+    }
+    break
   }
+}
 
+function isAvailableRoomName(proposedRoomName) {
+  return rooms.filter(function(room) {
+    return room.name === proposedRoomName
+  }).length < 1
 }
 
 function displayRooms(rooms, currentSocket) {
-  if (rooms.length) { currentSocket.write("Now Displaying Rooms:\n") }
-  rooms.forEach(function(room) {
-    currentSocket.write(room.name + " contains [" + getRoomCount(room.name) + "]\n")
-  })
+  if (rooms.length) { currentSocket.write("Now Displaying Rooms:\n")
+    rooms.forEach(function(room) {
+      currentSocket.write(room.name + " contains [" + getRoomCount(room.name) + "]\n")
+    })
+  } else {
+    currentSocket.write("There are currently no rooms made.\nTo create a room, use the command /create followed by the room name\nex: /create myRoom\n")
+  }
 }
 
 function getRoomCount(roomName) {
