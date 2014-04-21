@@ -10,19 +10,19 @@ function displayRooms(rooms, currentSocket, sockets) {
   if (rooms.length) {
     Writer.notifyDisplayingRooms(currentSocket)
     rooms.forEach(function(room) {
-      Writer.notifyRoomDetails(currentSocket, room.name, getRoomCount(room.name, sockets))
+      Writer.notifyRoomDetails(currentSocket, room.name, getUserCount(room.name, sockets))
     })
   } else {
     Writer.notifyNoRooms(currentSocket)
   }
 }
 
-function getRoomCount(roomName, sockets) {
+function getUserCount(roomName, sockets) {
   return sockets.filter(function(socket) { return socket.room === roomName }).length
 }
 
 module.exports = {
   isAvailableName : isAvailableName,
   displayRooms : displayRooms,
-  getRoomCount : getRoomCount
+  getUserCount : getUserCount
 }

@@ -40,6 +40,11 @@ function notifyRoomDetails(socket, roomName, roomUserCount) {
   socket.write(roomName + " contains [" + roomUserCount + "]\n")
 }
 
+function displayUsernames(socket, sockets) {
+  socket.write("User(s) within this room:\n")
+  sockets.forEach(function(s) { socket.write("* " + s.username + "\n") })
+}
+
 module.exports = {
   greet : greet,
   askName : askName,
@@ -49,5 +54,6 @@ module.exports = {
   notifyFailedRoomCreation : notifyFailedRoomCreation,
   notifyNoRooms : notifyNoRooms,
   notifyDisplayingRooms : notifyDisplayingRooms,
-  notifyRoomDetails : notifyRoomDetails
+  notifyRoomDetails : notifyRoomDetails,
+  displayUsernames : displayUsernames
 }

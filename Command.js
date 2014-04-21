@@ -29,6 +29,7 @@ function execute(parsedInput, currentSocket, rooms, sockets) {
         currentSocket.room = specifiedRoom
       }
     })
+    Writer.displayUsernames(currentSocket, sockets)
   }
 }
 
