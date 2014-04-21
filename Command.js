@@ -30,6 +30,8 @@ function execute(parsedInput, currentSocket, rooms, sockets) {
       }
     })
     Writer.displayUsernames(currentSocket, sockets)
+  case '/help':
+    Writer.printCommands(currentSocket, VALIDCOMMANDS)
   }
 }
 
