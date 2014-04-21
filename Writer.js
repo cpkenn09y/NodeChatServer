@@ -10,6 +10,7 @@ function notifyNameInvalid(socket) {
   socket.write("Sorry, please try again.\n")
   socket.write("The name you have provided is either taken or has failed validation.\n")
   socket.write("Type the command /users to see a list of all taken usernames\n")
+  askName(socket)
 }
 
 function welcomeUser(socket, username) {

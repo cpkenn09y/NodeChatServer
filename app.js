@@ -3,6 +3,7 @@ var parser = require('./parser')
 var Writer = require('./Writer')
 var Broadcaster = require('./Broadcaster')
 var Room = require('./Room')
+var SocketUsername = require('./SocketUsername')
 var RoomHelper = require('./RoomHelper')
 
 var server = net.Server()
@@ -11,7 +12,10 @@ server.listen(1337)
 
 var sockets = []
 var rooms = []
+
 var DEFAULTROOM = "home"
+var VALIDCOMMANDS = ["/create", "/rooms", "/join", "/users", "/help"]
+
 rooms.push(new Room(DEFAULTROOM))
 
 server.on('connection', function(socket) {
@@ -21,7 +25,7 @@ server.on('connection', function(socket) {
   Writer.greet(socket)
   Writer.askName(socket)
 
-  socket.on('data', determineAction)
+  socket.on('data', respondToUserInput)
   socket.on('end', removeSocket)
 })
 
@@ -30,22 +34,7 @@ function removeSocket() {
   sockets.splice(i, 1)
 }
 
-function isAvailableUsername(userInput) {
-  return sockets.filter(function(socket) {
-    return socket.username === userInput
-  }).length < 1
-}
-
-function nameInvalid(socket) {
-  Writer.notifyNameInvalid(socket)
-  Writer.askName(socket)
-}
-
-function assignUsernameToSocket(userInput ) {
-  this.username = userInput
-}
-
-function determineAction(data) {
+function respondToUserInput(data) {
   var currentSocket = this
   var userInput = data.toString().trim()
   if (currentSocket.username) {
@@ -53,12 +42,12 @@ function determineAction(data) {
     if (parsedInput["userInput"]["command"]) { executeCommand(parsedInput["userInput"], currentSocket) }
     if (parsedInput["userInput"]["dialog"]) { Broadcaster.postDialog(currentSocket, userInput, sockets) }
   } else {
-    if (isAvailableUsername(userInput) && userInput.length >= 2 && userInput.length <= 15) {
-      assignUsernameToSocket.call(currentSocket, userInput)
+    if (SocketUsername.isAvailable(userInput, sockets) && SocketUsername.isValid(userInput)) {
+      SocketUsername.assign.call(currentSocket, userInput)
       Writer.welcomeUser(currentSocket, currentSocket.username)
       Broadcaster.announceEnteredRoom(currentSocket, sockets)
     } else {
-      nameInvalid(currentSocket)
+      Writer.notifyNameInvalid(currentSocket)
     }
   }
 }
