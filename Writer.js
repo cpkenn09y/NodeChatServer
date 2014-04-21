@@ -19,11 +19,11 @@ function welcomeUser(socket, username) {
 }
 
 function notifyRoomCreated(socket, roomName) {
-  socket.write("ROOM CREATION SUCCESSFUL YOU CAN JOIN THE ROOM BY ENTERING: /join " + roomName + "\n")
+  socket.write("Room creation successful you can join the room by entering: /join " + roomName + "\n")
 }
 
 function notifyFailedRoomCreation(socket, roomName) {
-  socket.write("THERE IS ALREADY A ROOM WITH THE NAME: " + roomName + "\n")
+  socket.write("There is already a room with the name: " + roomName + "\n")
 }
 
 function notifyNoRooms(socket) {
