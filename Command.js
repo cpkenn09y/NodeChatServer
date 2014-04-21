@@ -25,11 +25,24 @@ function execute(parsedInput, currentSocket, rooms, sockets) {
   case '/join':
     var specifiedRoom = parsedInput["specification"]
     rooms.forEach(function(room) {
-      if (room.name === specifiedRoom) {
-        currentSocket.room = specifiedRoom
+      if (room.name === specifiedRoom) { currentSocket.room = specifiedRoom }
+    })
+    sockets.forEach(function(socket) {
+      if (currentSocket.room === socket.room) {
+        Writer.printName(currentSocket, socket.username)
       }
     })
-    Writer.displayUsernames(currentSocket, sockets)
+    break
+  case '/users':
+    sockets.forEach(function(socket){
+      if (currentSocket.room === socket.room) {
+        Writer.printName(currentSocket, socket.username)
+      }
+    })
+    break
+  case '/help':
+    Writer.printCommands(currentSocket, VALIDCOMMANDS)
+    break
   }
 }
 

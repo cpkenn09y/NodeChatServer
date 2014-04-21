@@ -45,6 +45,14 @@ function displayUsernames(socket, sockets) {
   sockets.forEach(function(s) { socket.write("* " + s.username + "\n") })
 }
 
+function printName(socket, username) {
+  socket.write("* " + username + "\n")
+}
+
+function printCommands(socket, commands) {
+  commands.forEach(function(command) {socket.write("* " + command + "\n") })
+}
+
 module.exports = {
   greet : greet,
   askName : askName,
@@ -55,5 +63,7 @@ module.exports = {
   notifyNoRooms : notifyNoRooms,
   notifyDisplayingRooms : notifyDisplayingRooms,
   notifyRoomDetails : notifyRoomDetails,
-  displayUsernames : displayUsernames
+  displayUsernames : displayUsernames,
+  printName : printName,
+  printCommands : printCommands
 }
