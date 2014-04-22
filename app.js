@@ -1,5 +1,5 @@
 var net = require('net')
-var parser = require('./parser')
+var Parser = require('./Parser')
 var Writer = require('./Writer')
 var Broadcaster = require('./Broadcaster')
 var Room = require('./Room')
@@ -38,7 +38,7 @@ function respondToUserInput(data) {
   var currentSocket = this
   var userInput = data.toString().trim()
   if (currentSocket.username) {
-    var parsedInput = parser.analyzeInput(userInput)
+    var parsedInput = Parser.analyzeInput(userInput)
     if (Command.isValid(parsedInput["command"])) {
       Command.execute(parsedInput, currentSocket, rooms, sockets)
     }
