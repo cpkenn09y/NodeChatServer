@@ -9,7 +9,7 @@ var RoomHelper = require('./RoomHelper')
 
 var server = net.Server()
 
-server.listen(1337)
+server.listen(80)
 
 var sockets = []
 var rooms = []
